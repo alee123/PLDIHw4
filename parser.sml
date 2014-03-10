@@ -56,7 +56,7 @@ structure Parser =  struct
                  | T_TRUE 
                  | T_FALSE
                  | T_EQUAL
-		 | T_LESS
+     | T_LESS
                  | T_IF 
                  | T_THEN
                  | T_ELSE
@@ -65,21 +65,21 @@ structure Parser =  struct
                  | T_PLUS
                  | T_MINUS
                  | T_TIMES
-		 | T_BACKSLASH
- 		 | T_RARROW
- 		 | T_LARROW
- 		 | T_DCOLON
+     | T_BACKSLASH
+     | T_RARROW
+     | T_LARROW
+     | T_DCOLON
                  | T_COMMA
                  | T_LBRACKET
                  | T_RBRACKET
-		 | T_LBRACE
-		 | T_RBRACE
-		 | T_DOT
-		 | T_HASH
-		 | T_DDOTS
-		 | T_BAR
-		 | T_MATCH
-		 | T_WITH
+     | T_LBRACE
+     | T_RBRACE
+     | T_DOT
+     | T_HASH
+     | T_DDOTS
+     | T_BAR
+     | T_MATCH
+     | T_WITH
 
 
   fun stringOfToken T_LET = "T_LET"
@@ -163,18 +163,18 @@ structure Parser =  struct
     map convert [("( |\\n|\\t)+",         whitespace),
                  ("=",                    produceEqual),
                  ("\\+",                  producePlus),
-		 ("\\*",                  produceTimes),
-		 ("\\\\",                 produceBackslash),
-		 ("->",                   produceRArrow),
-		 ("<-",                   produceLArrow),
-		 ("<",                    produceLess),
+     ("\\*",                  produceTimes),
+     ("\\\\",                 produceBackslash),
+     ("->",                   produceRArrow),
+     ("<-",                   produceLArrow),
+     ("<",                    produceLess),
                  ("-",                    produceMinus),
-		 ("#",                    produceHash),
+     ("#",                    produceHash),
                  ("::",                   produceDColon),
                  ("\\.\\.",               produceDDots),
-		 ("\\.",                  produceDot),
-		 (",",                    produceComma),
-		 ("\\|",                  produceBar),
+     ("\\.",                  produceDot),
+     (",",                    produceComma),
+     ("\\|",                  produceBar),
                  ("[a-zA-Z][a-zA-Z0-9]*", produceSymbol),
                  ("~?[0-9]+",             produceInt),
                  ("\\(",                  produceLParen),
@@ -259,8 +259,8 @@ structure Parser =  struct
 
   fun expect [] ts = SOME ts
     | expect (token::tokens) (t::ts) = if token = t then 
-					 expect tokens ts
-				       else NONE
+           expect tokens ts
+               else NONE
     | expect _ _ = NONE
 
 
@@ -293,14 +293,14 @@ structure Parser =  struct
   fun expect_BAR ts = expect [T_BAR] ts
   fun expect_MATCH ts = expect [T_MATCH] ts
   fun expect_WITH ts = expect [T_WITH] ts
-			  
+        
 
 
   fun choose [] ts = NONE
     | choose (parser::parsers) ts = 
       (case parser ts
-	of NONE => choose parsers ts
-	 | s => s)
+  of NONE => choose parsers ts
+   | s => s)
 
 
   (*
@@ -314,48 +314,48 @@ structure Parser =  struct
 
   fun parse_expr ts = 
       (case parse_eterm ts
-	of NONE => NONE
-	 | SOME (e1,ts) => 
-	   (case expect_EQUAL ts
-	     of NONE => (case expect_LESS ts
-			  of NONE => SOME (e1,ts)
-			   | SOME ts => 
-			     (case parse_eterm ts
-			       of NONE => NONE
-				| SOME (e2,ts) => SOME (call2 "less" e1 e2, ts)))
-	      | SOME ts => 
-		(case parse_eterm ts
-		  of NONE => NONE
-		   | SOME (e2,ts) => SOME (call2 "equal" e1 e2, ts))))
+  of NONE => NONE
+   | SOME (e1,ts) => 
+     (case expect_EQUAL ts
+       of NONE => (case expect_LESS ts
+        of NONE => SOME (e1,ts)
+         | SOME ts => 
+           (case parse_eterm ts
+             of NONE => NONE
+        | SOME (e2,ts) => SOME (call2 "less" e1 e2, ts)))
+        | SOME ts => 
+    (case parse_eterm ts
+      of NONE => NONE
+       | SOME (e2,ts) => SOME (call2 "equal" e1 e2, ts))))
 
   and parse_eterm ts = 
       (case parse_cterm ts
-	of NONE => NONE
-	 | SOME (e1,ts) => 
-	   (case expect_DCOLON ts
-	     of NONE => SOME (e1,ts)
-	      | SOME ts => 
-		(case parse_cterm ts
-		  of NONE => NONE
-		   | SOME (e2,ts) => SOME (call2 "cons" e1 e2, ts))))
+  of NONE => NONE
+   | SOME (e1,ts) => 
+     (case expect_DCOLON ts
+       of NONE => SOME (e1,ts)
+        | SOME ts => 
+    (case parse_cterm ts
+      of NONE => NONE
+       | SOME (e2,ts) => SOME (call2 "cons" e1 e2, ts))))
 
 
   and parse_cterm ts = 
       (case parse_term ts
-	of NONE => NONE
-	 | SOME (e1,ts) => 
-	   (case expect_PLUS ts
-	     of NONE =>
-		(case expect_MINUS ts
-		  of NONE => SOME (e1,ts)
-		   | SOME ts => 
-		     (case parse_term ts
-		       of NONE => NONE
-			| SOME (e2,ts) => SOME (call2 "sub" e1 e2, ts)))
-	      | SOME ts => 
-		(case parse_term ts
-		  of NONE => NONE
-		   | SOME (e2,ts) => SOME (call2 "add" e1 e2, ts))))
+  of NONE => NONE
+   | SOME (e1,ts) => 
+     (case expect_PLUS ts
+       of NONE =>
+    (case expect_MINUS ts
+      of NONE => SOME (e1,ts)
+       | SOME ts => 
+         (case parse_term ts
+           of NONE => NONE
+      | SOME (e2,ts) => SOME (call2 "sub" e1 e2, ts)))
+        | SOME ts => 
+    (case parse_term ts
+      of NONE => NONE
+       | SOME (e2,ts) => SOME (call2 "add" e1 e2, ts))))
 
 
   and parse_term ts = let
@@ -377,13 +377,13 @@ structure Parser =  struct
               parse_aterm_TRUE,
               parse_aterm_FALSE,
               parse_aterm_SYM,
-	      parse_aterm_FUN,
+        parse_aterm_FUN,
               parse_aterm_PARENS,
-	      parse_aterm_IF,
-	      parse_aterm_LET,
-	      parse_aterm_LET_FUN,
+        parse_aterm_IF,
+        parse_aterm_LET,
+        parse_aterm_LET_FUN,
         parse_aterm_LET_FUN_MORE
-	     ] ts
+       ] ts
 
   and parse_aterm_INT ts = 
     (case expect_INT ts 
@@ -409,15 +409,15 @@ structure Parser =  struct
     (case expect_BACKSLASH ts 
       of NONE => NONE
        | SOME ts => 
-	 (case expect_SYM ts
-	   of NONE => NONE
-	    | SOME (s,ts) => 
-	      (case expect_RARROW ts
-		of NONE => NONE
-		 | SOME ts => 
-		   (case parse_expr ts
-		     of NONE => NONE
-		      | SOME (e,ts) => SOME (I.EFun (s,e), ts)))))
+   (case expect_SYM ts
+     of NONE => NONE
+      | SOME (s,ts) => 
+        (case expect_RARROW ts
+    of NONE => NONE
+     | SOME ts => 
+       (case parse_expr ts
+         of NONE => NONE
+          | SOME (e,ts) => SOME (I.EFun (s,e), ts)))))
 
   and parse_aterm_PARENS ts = 
     (case expect_LPAREN ts
@@ -477,7 +477,7 @@ structure Parser =  struct
          (case expect_SYM ts 
            of NONE => NONE
             | SOME (s,ts) => 
-	      (case expect_SYM ts
+        (case expect_SYM ts
                 of NONE => NONE
                  | SOME (param,ts) => 
                    (case expect_EQUAL ts
@@ -516,16 +516,16 @@ structure Parser =  struct
                                   (case parse_expr ts
                                     of NONE => NONE
                                      | SOME (e2,ts) => 
-                                         SOME (I.ELetFun (s,p,e1,e2),ts))))))))
+                                         SOME (I.ELetFun (s,p,(get_function params e1),e2),ts))))))))
 
   and get_function [] e = e
-    | get_function (p::ps) e = (get_function (ps) (I.EFun(p,e)))
+    | get_function (p::ps) e = (get_function (ps) (I.EFun(p,e)))    
 
 
   and parse_aterm_list ts = 
       choose [parse_aterm_list_ATERM_LIST,
-	      parse_aterm_list_EMPTY
-	     ] ts 
+        parse_aterm_list_EMPTY
+       ] ts 
 
   and parse_aterm_list_ATERM_LIST ts = 
     (case parse_aterm ts
