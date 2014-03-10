@@ -242,6 +242,7 @@ structure Parser =  struct
    *             T_IF expr T_THEN expr T_ELSE expr          [aterm_IF]
    *             T_LET T_SYM T_EQUAL expr T_IN expr         [aterm_LET]
    *             T_LET T_SYM T_SYM T_EQUAL expr T_IN expr   [aterm_LET_FUN]
+  *              T_LET T_SYM sym_list T_EQUAL expr T_IN expr [aterm_LET_FUN_MORE]
    *)
 
 
@@ -311,7 +312,6 @@ structure Parser =  struct
   fun call2 oper e1 e2 = I.EApp (I.EApp (I.EIdent oper, e1), e2)
 
 
-
   fun parse_expr ts = 
       (case parse_eterm ts
 	of NONE => NONE
@@ -327,7 +327,6 @@ structure Parser =  struct
 		(case parse_eterm ts
 		  of NONE => NONE
 		   | SOME (e2,ts) => SOME (call2 "equal" e1 e2, ts))))
-
 
   and parse_eterm ts = 
       (case parse_cterm ts
@@ -382,7 +381,8 @@ structure Parser =  struct
               parse_aterm_PARENS,
 	      parse_aterm_IF,
 	      parse_aterm_LET,
-	      parse_aterm_LET_FUN
+	      parse_aterm_LET_FUN,
+        parse_aterm_LET_FUN_MORE
 	     ] ts
 
   and parse_aterm_INT ts = 
@@ -494,6 +494,32 @@ structure Parser =  struct
                                      | SOME (e2,ts) => 
                                          SOME (I.ELetFun (s,param,e1,e2),ts))))))))
 
+  and parse_aterm_LET_FUN_MORE ts = 
+    (case expect_LET ts 
+      of NONE => NONE
+       | SOME ts => 
+         (case expect_SYM ts 
+           of NONE => NONE
+            | SOME (s,ts) => 
+        (case parse_sym_list ts
+                of NONE => NONE
+                 | SOME (p::params,ts) => 
+                   (case expect_EQUAL ts
+                     of NONE => NONE
+                      | SOME ts => 
+                        (case parse_expr ts
+                          of NONE => NONE
+                           | SOME (e1,ts) => 
+                             (case expect_IN ts
+                               of NONE => NONE
+                                | SOME ts => 
+                                  (case parse_expr ts
+                                    of NONE => NONE
+                                     | SOME (e2,ts) => 
+                                         SOME (I.ELetFun (s,p,e1,e2),ts))))))))
+
+  and get_function [] e = e
+    | get_function (p::ps) e = (get_function (ps) (I.EFun(p,e)))
 
 
   and parse_aterm_list ts = 
@@ -511,6 +537,23 @@ structure Parser =  struct
 
   and parse_aterm_list_EMPTY ts = SOME ([], ts)
 
+  and parse_sym_list ts = 
+      choose [parse_sym_list_SYM_LIST,
+        parse_sym_list_SYM
+       ] ts 
+
+  and parse_sym_list_SYM_LIST ts = 
+    (case expect_SYM ts
+      of NONE => NONE
+       | SOME (s,ts) => 
+         (case parse_sym_list ts
+           of NONE => NONE
+            | SOME (ss,ts) => SOME (s::ss,ts)))
+
+  and parse_sym_list_SYM ts = 
+    (case expect_SYM ts
+      of NONE => NONE
+        | SOME (s, ts) => SOME ([s], ts))
 
   fun parse ts = 
       (case parse_expr ts
