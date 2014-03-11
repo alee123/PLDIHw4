@@ -52,6 +52,7 @@ structure Evaluator = struct
 
   fun primInterval (I.VInt i) (I.VInt j) = if j < i then I.VList [] 
     else primCons (I.VInt i) (primInterval (primPlus (I.VInt i) (I.VInt 1)) (I.VInt j))
+    | primInterval _ _ = evalError "primInterval"
 
   fun lookup (name:string) [] = evalError ("failed lookup for "^name)
     | lookup name ((n,v)::env) = 
@@ -75,8 +76,14 @@ structure Evaluator = struct
     | eval env (I.EApp (e1,e2)) = evalApp env (eval env e1) (eval env e2)
     | eval env (I.EPrimCall1 (f,e1)) = f (eval env e1)
     | eval env (I.EPrimCall2 (f,e1,e2)) = f (eval env e1) (eval env e2)
-    | eval env (I.ERecord fs) = evalError "ERecord not implemented"
-    | eval env (I.EField (e,s)) = evalError "EField not implemented"
+    | eval env (I.ERecord fs) = I.VRecord (evalRecord env fs)
+    | eval env (I.EField (e,s)) = evalField env (eval env e) s
+
+  and evalRecord env ((s, e)::fs) = (s, (eval env e))::(evalRecord env fs)
+    | evalRecord env [] = []
+
+  and evalField env (I.VRecord r) s = lookup s r
+    | evalField _ _ _ = evalError "evalField" 
       
   and evalApp _ (I.VClosure (n,body,env)) v = eval ((n,v)::env) body
     | evalApp _ (I.VRecClosure (f,n,body,env)) v = let
