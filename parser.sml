@@ -382,7 +382,8 @@ structure Parser =  struct
         parse_aterm_IF,
         parse_aterm_LET,
         parse_aterm_LET_FUN,
-        parse_aterm_LET_FUN_MORE
+        parse_aterm_LET_FUN_MORE,
+        parse_aterm_BRACKETS
        ] ts
 
   and parse_aterm_INT ts = 
@@ -517,6 +518,19 @@ structure Parser =  struct
                                     of NONE => NONE
                                      | SOME (e2,ts) => 
                                          SOME (I.ELetFun (s,p,(get_function params e1),e2),ts))))))))
+  and parse_aterm_BRACKETS ts = 
+    (case expect_LBRACKET ts 
+      of NONE => NONE
+      | SOME ts => 
+        (case parse_expr_list ts
+          of NONE => NONE
+          | SOME (es, ts) => 
+            (case expect_RBRACKET ts
+              of NONE => NONE
+              | SOME ts => SOME ((consItUp es), ts))))
+
+  and consItUp (e::es) = (call2 "cons" e (consItUp es))
+    | consItUp [] = I.EVal (I.VList [])
 
   and get_function [] e = e
     | get_function (p::ps) e = (get_function (ps) (I.EFun(p,e)))    
@@ -536,6 +550,30 @@ structure Parser =  struct
             | SOME (ats,ts) => SOME (at::ats,ts)))
 
   and parse_aterm_list_EMPTY ts = SOME ([], ts)
+
+  and parse_expr_list ts = 
+    choose [parse_expr_list_COMMA, 
+      parse_expr_list_EXPR,
+      parse_expr_list_EMPTY
+      ] ts
+
+  and parse_expr_list_COMMA ts= 
+    (case parse_expr ts 
+      of NONE => NONE
+        | SOME (e, ts) => 
+          (case expect_COMMA ts 
+            of NONE => NONE
+            | SOME ts => 
+              (case parse_expr_list ts 
+                of NONE => NONE
+                | SOME (es, ts) => SOME (e::es, ts))))
+
+  and parse_expr_list_EXPR ts= 
+    (case parse_expr ts 
+      of NONE => NONE
+        | SOME (e, ts)=> SOME ([e], ts)) 
+
+  and parse_expr_list_EMPTY ts= SOME ([],ts)
 
   and parse_sym_list ts = 
       choose [parse_sym_list_SYM_LIST,
