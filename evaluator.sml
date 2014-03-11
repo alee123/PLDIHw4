@@ -27,7 +27,16 @@ structure Evaluator = struct
 
   fun primEq (I.VInt a) (I.VInt b) = I.VBool (a=b)
     | primEq (I.VBool a) (I.VBool b) = I.VBool (a=b)
+    | primEq (I.VList a) (I.VList b) = I.VBool (checkListEqual a b)
     | primEq _ _ = I.VBool false
+
+  and checkListEqual (a::aas) (b::bs) = if (getBool a b) then (checkListEqual aas bs)
+                                          else false
+    | checkListEqual [] [] = true
+    | checkListEqual _ _ = false
+
+  and getBool (I.VInt a) (I.VInt b) = (a=b)
+    | getBool _ _ = false
 
   fun primLess (I.VInt a) (I.VInt b) = I.VBool (a<b)
     | primLess _ _ = I.VBool false
