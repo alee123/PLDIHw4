@@ -2,8 +2,6 @@
  *   CODE FOR HOMEWORK 4
  *)
 
-(*CM.make "homework4.cm";*)
-
 structure Evaluator = struct
 
   structure I = InternalRepresentation
@@ -38,6 +36,8 @@ structure Evaluator = struct
   and getBool (I.VInt a) (I.VInt b) = (a=b)
     | getBool _ _ = false
 
+  fun checkVBool (I.VBool a) (I.VBool b) = (a=b)
+
   fun primLess (I.VInt a) (I.VInt b) = I.VBool (a<b)
     | primLess _ _ = I.VBool false
 
@@ -55,24 +55,6 @@ structure Evaluator = struct
     | primInterval _ _ = evalError "primInterval"
 
   fun testMap f l = if l = [] then [] else (f (List.hd l))::(testMap f (List.tl l))
-
-  (*fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.VList []*)
-
-(*  fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.VList []*)
-
-(*  fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.VList [I.VClosure (n,I.EVal (I.EApp ((I.EVal (I.VClosure (n,e,env))),(I.EVal (primHd (I.VList l))))),env)]*)
-
-  (*fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.VList [I.VClosure (n,eval env (I.EApp (I.VClosure (n,e,env)),(primHd (I.VList l))),env)]*)
-
-(*  fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.VList (I.EApp (I.VClosure (n,e,env)) (primHd (I.VList l)))*)
-
-  (*fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.EApp ((I.VClosure (n,e,env)),(primHd (I.VList l)))*)
-
-(*    fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.VInt (I.EApp ((I.EVal (I.VClosure (n,e,env))),(I.EVal (primHd (I.VList l)))))*)
-
-(*  fun primMap (I.VClosure (n,e,env)) (I.VList l) = (I.EApp ((I.VClosure (n,e,env)),I.EVal (I.VInt 10)))*)
-
-  (*fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.EApp ((I.VClosure (n,e,env)),(primHd (I.VList l)))*)
 
   fun lookup (name:string) [] = evalError ("failed lookup for "^name)
     | lookup name ((n,v)::env) = 
@@ -125,20 +107,13 @@ structure Evaluator = struct
       eval ((id,f)::env) body
   end
 
-  (*fun primMap (I.VClosure (n,e,env)) (I.VList l) = I.VList [eval env (I.EApp (I.EVal (I.VClosure (n,e,env))),(I.EVal (primHd (I.VList l))))]*)
-(*  fun primMap (I.VClosure (n,e,env)) (I.VList l) = eval (env) (I.EApp ((I.EVal (I.VClosure (n,e,env))),(I.EVal (primHd (I.VList l)))))*)
-
   fun primMap (I.VClosure (n,e,env)) (I.VList l) = if (checkListEqual l []) then I.VList []
     else primCons (eval (env) (I.EApp ((I.EVal (I.VClosure (n,e,env))),(I.EVal (primHd (I.VList l)))))) (primMap (I.VClosure (n,e,env)) (primTl (I.VList l)))
 
-(*  fun primMap (I.VClosure (n,e,env)) (I.VList l) = if l = (I.VList []) then (I.VList [])
-    else let val hd = (primHd (I.VList l))
-      in
-        let val tl = (primTl (I.VList l))
-          in
-            primCons (eval (env) (I.EApp ((I.EVal (I.VClosure (n,e,env))),(I.EVal hd)))) (primMap (I.VClosure (n,e,env)) (tl))
-          end
-      end*)
+  fun primFilter (I.VClosure (n,e,env)) (I.VList l) = if (checkListEqual l []) then I.VList []
+    else if (checkVBool (eval (env) (I.EApp ((I.EVal (I.VClosure (n,e,env))),(I.EVal (primHd (I.VList l)))))) (I.VBool true)) 
+      then primCons (primHd (I.VList l)) (primFilter (I.VClosure (n,e,env)) (primTl (I.VList l)))
+        else (primFilter (I.VClosure (n,e,env)) (primTl (I.VList l)))
 
   (* 
    *   Initial environment (already in a form suitable for the environment)
@@ -184,11 +159,17 @@ structure Evaluator = struct
               I.EIdent "a",
               I.EIdent "b")),
           [])),
-        ("map", I.VClosure ("a",
-          I.EFun ("b",
+        ("map", I.VClosure ("f",
+          I.EFun ("xs",
             I.EPrimCall2 (primMap,
-              I.EIdent "a",
-              I.EIdent "b")),
+              I.EIdent "f",
+              I.EIdent "xs")),
+          [])),
+        ("filter", I.VClosure ("f",
+          I.EFun ("xs",
+            I.EPrimCall2 (primFilter,
+              I.EIdent "f",
+              I.EIdent "xs")),
           []))]
         
   
