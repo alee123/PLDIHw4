@@ -387,7 +387,7 @@ structure Parser =  struct
         parse_aterm_MATCH,
         parse_aterm_INTERVAL,
         parse_aterm_MAP,
-        parse_aterm_FILTER,
+        (*parse_aterm_FILTER,*)
         parse_aterm_RECORD,
         parse_aterm_FIELD
        ] ts
@@ -614,10 +614,10 @@ structure Parser =  struct
                         (case parse_expr ts
                           of NONE => NONE
                           | SOME (e2, ts) =>
-                            (case expect_RBRACKET
+                            (case expect_RBRACKET ts
                               of NONE => NONE
-                              | SOME ts => NONE))))) ))
-
+                              | SOME ts => SOME ((call2 "map" (I.EFun (s, e1)) e2), ts)))))) ))
+(*)
   and parse_aterm_FILTER ts = 
     (case expect_LBRACKET ts 
       of NONE => NONE
@@ -646,6 +646,8 @@ structure Parser =  struct
                                     (case expect_RBRACKET ts
                                       of NONE => NONE
                                       | SOME ts => NONE)))))))) )
+
+  *)
 
 
   and parse_aterm_RECORD ts = 
