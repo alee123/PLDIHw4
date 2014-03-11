@@ -386,7 +386,8 @@ structure Parser =  struct
         parse_aterm_BRACKETS, 
         parse_aterm_MATCH,
         parse_aterm_INTERVAL,
-        parse_aterm_RECORD
+        parse_aterm_RECORD,
+        parse_aterm_FIELD
        ] ts
 
   and parse_aterm_INT ts = 
@@ -602,6 +603,17 @@ structure Parser =  struct
             (case expect_RBRACE ts
               of NONE => NONE
               | SOME ts => SOME (I.ERecord f, ts))))
+
+  and parse_aterm_FIELD ts = 
+    (case expect_HASH ts 
+      of NONE => NONE
+      | SOME ts => 
+        (case expect_SYM ts
+          of NONE => NONE
+          | SOME (s,ts) => 
+            (case parse_expr ts
+              of NONE => NONE
+              | SOME (e,ts) => SOME (I.EField (e, s), ts))))
 
   and matchLogic e1 e2 e3 s1 s2 = 
     I.EIf ((call2 "equal" e1 (I.EVal (I.VList []))),e2,(I.ELet (s1,(call1 "hd" e1),(I.ELet (s2,(call1 "tl" e1),e3)))))
