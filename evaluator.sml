@@ -2,6 +2,7 @@
  *   CODE FOR HOMEWORK 4
  *)
 
+(*CM.make "homework4.cm";*)
 
 structure Evaluator = struct
 
@@ -116,7 +117,15 @@ structure Evaluator = struct
 						  I.EIdent "a",
 						  I.EIdent "b")),
 			    [])),
-       ("nil", I.VList [])]
+       ("nil", I.VList []),
+       ("cons", I.VClosure ("a",
+          I.EFun ("b",
+            I.EPrimCall2 (primCons,
+              I.EIdent "a",
+              I.EIdent "b")),
+          [])),
+       ("hd", I.VClosure ("a", I.EPrimCall1 (primHd, I.EIdent "a"),[])),
+       ("tl", I.VClosure ("a", I.EPrimCall1 (primTl, I.EIdent "a"),[]))]
         
   
 				 
