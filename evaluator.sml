@@ -37,6 +37,7 @@ structure Evaluator = struct
     | getBool _ _ = false
 
   fun checkVBool (I.VBool a) (I.VBool b) = (a=b)
+    | checkVBool _ _ = evalError "checkVBool"
 
   fun primLess (I.VInt a) (I.VInt b) = I.VBool (a<b)
     | primLess _ _ = I.VBool false
@@ -109,11 +110,13 @@ structure Evaluator = struct
 
   fun primMap (I.VClosure (n,e,env)) (I.VList l) = if (checkListEqual l []) then I.VList []
     else primCons (eval (env) (I.EApp ((I.EVal (I.VClosure (n,e,env))),(I.EVal (primHd (I.VList l)))))) (primMap (I.VClosure (n,e,env)) (primTl (I.VList l)))
+    | primMap _ _ = evalError "primMap" 
 
   fun primFilter (I.VClosure (n,e,env)) (I.VList l) = if (checkListEqual l []) then I.VList []
     else if (checkVBool (eval (env) (I.EApp ((I.EVal (I.VClosure (n,e,env))),(I.EVal (primHd (I.VList l)))))) (I.VBool true)) 
       then primCons (primHd (I.VList l)) (primFilter (I.VClosure (n,e,env)) (primTl (I.VList l)))
         else (primFilter (I.VClosure (n,e,env)) (primTl (I.VList l)))
+    | primFilter _ _ = evalError "primFilter"
 
   (* 
    *   Initial environment (already in a form suitable for the environment)
