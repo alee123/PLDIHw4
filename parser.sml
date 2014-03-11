@@ -385,7 +385,8 @@ structure Parser =  struct
         parse_aterm_LET_FUN_MORE,
         parse_aterm_BRACKETS, 
         parse_aterm_MATCH,
-        parse_aterm_INTERVAL
+        parse_aterm_INTERVAL,
+        parse_aterm_RECORD
        ] ts
 
   and parse_aterm_INT ts = 
@@ -572,6 +573,7 @@ structure Parser =  struct
                                   of NONE => NONE
                                   | SOME (e3, ts) => SOME((matchLogic e1 e2 e3 s1 s2),ts))))))))))))))
 
+
   and parse_aterm_INTERVAL ts = 
     (case expect_LBRACKET ts 
       of NONE => NONE
@@ -589,6 +591,18 @@ structure Parser =  struct
                       of NONE => NONE
                       | SOME ts => SOME ((call2 "interval" e1 e2) , ts))))))
 
+
+  and parse_aterm_RECORD ts = 
+    (case expect_LBRACE ts 
+      of NONE => NONE 
+      | SOME ts => 
+        (case parse_fields ts 
+          of NONE => NONE
+          | SOME (f,ts) => 
+            (case expect_RBRACE ts
+              of NONE => NONE
+              | SOME ts => SOME (I.ERecord f, ts))))
+
   and matchLogic e1 e2 e3 s1 s2 = 
     I.EIf ((call2 "equal" e1 (I.EVal (I.VList []))),e2,(I.ELet (s1,(call1 "hd" e1),(I.ELet (s2,(call1 "tl" e1),e3)))))
 
@@ -598,6 +612,41 @@ structure Parser =  struct
   and get_function [] e = e
     | get_function (p::ps) e = (get_function (ps) (I.EFun(p,e)))    
 
+  and parse_fields ts = 
+      choose [parse_fields_FIELDS,
+        parse_fields_EXPR,
+        parse_fields_EMPTY
+      ] ts
+
+  and parse_fields_FIELDS ts = 
+    (case expect_SYM ts 
+      of NONE => NONE
+      | SOME (s,ts) => 
+        (case expect_EQUAL ts 
+          of NONE => NONE
+          | SOME ts => 
+            (case parse_expr ts
+              of NONE => NONE
+              | SOME (e,ts) => 
+                (case expect_COMMA ts
+                  of NONE => NONE
+                  | SOME ts => 
+                    (case parse_fields ts 
+                      of NONE => NONE
+                      | SOME (fs, ts) => SOME (((s,e)::fs), ts))))))
+
+  and parse_fields_EXPR ts = 
+    (case expect_SYM ts 
+      of NONE => NONE
+      | SOME (s, ts) => 
+        (case expect_EQUAL ts 
+          of NONE => NONE
+          | SOME ts => 
+            (case parse_expr ts 
+              of NONE => NONE
+              | SOME (e,ts) => SOME (([(s,e)]), ts) )))
+
+  and parse_fields_EMPTY ts = SOME ([], ts)
 
   and parse_aterm_list ts = 
       choose [parse_aterm_list_ATERM_LIST,
