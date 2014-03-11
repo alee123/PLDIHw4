@@ -50,7 +50,9 @@ structure Evaluator = struct
   fun primTl (I.VList (l::ls)) = I.VList (ls)
     | primTl _ = evalError "primTl"
 
-			 
+  fun primInterval (I.VInt i) (I.VInt j) = if j < i then I.VList [] 
+    else primCons (I.VInt i) (primInterval (primPlus (I.VInt i) (I.VInt 1)) (I.VInt j))
+
   fun lookup (name:string) [] = evalError ("failed lookup for "^name)
     | lookup name ((n,v)::env) = 
         if (n = name) then 
@@ -134,7 +136,13 @@ structure Evaluator = struct
               I.EIdent "b")),
           [])),
        ("hd", I.VClosure ("a", I.EPrimCall1 (primHd, I.EIdent "a"),[])),
-       ("tl", I.VClosure ("a", I.EPrimCall1 (primTl, I.EIdent "a"),[]))]
+       ("tl", I.VClosure ("a", I.EPrimCall1 (primTl, I.EIdent "a"),[])),
+       ("interval", I.VClosure ("a",
+          I.EFun ("b",
+            I.EPrimCall2 (primInterval,
+              I.EIdent "a",
+              I.EIdent "b")),
+          []))]
         
   
 				 
