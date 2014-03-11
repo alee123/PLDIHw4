@@ -31,10 +31,10 @@ structure Evaluator = struct
   fun primLess (I.VInt a) (I.VInt b) = I.VBool (a<b)
     | primLess _ _ = I.VBool false
 
-  fun primCons (I.VInt a) (I.VList l) = I.VList (a::l)
+  fun primCons (I.VInt a) (I.VList l) = I.VList ((I.VInt a)::l)
     | primCons _ _ = evalError "primCons"
 
-  fun primHd (I.VList (l::ls)) = I.V (l)
+  fun primHd (I.VList (l::ls)) = l
     | primHd _ = evalError "primHd"
 
   fun primTl (I.VList (l::ls)) = I.VList (ls)
@@ -115,7 +115,8 @@ structure Evaluator = struct
 				    I.EPrimCall2 (primLess,
 						  I.EIdent "a",
 						  I.EIdent "b")),
-			    []))]
+			    [])),
+       ("nil", I.VList [])]
         
   
 				 
