@@ -384,7 +384,8 @@ structure Parser =  struct
         parse_aterm_LET_FUN,
         parse_aterm_LET_FUN_MORE,
         parse_aterm_BRACKETS, 
-        parse_aterm_MATCH
+        parse_aterm_MATCH,
+        parse_aterm_INTERVAL
        ] ts
 
   and parse_aterm_INT ts = 
@@ -570,6 +571,23 @@ structure Parser =  struct
                                 (case parse_expr ts
                                   of NONE => NONE
                                   | SOME (e3, ts) => SOME((matchLogic e1 e2 e3 s1 s2),ts))))))))))))))
+
+  and parse_aterm_INTERVAL ts = 
+    (case expect_LBRACKET ts 
+      of NONE => NONE
+      | SOME ts => 
+        (case parse_expr ts 
+          of NONE => NONE
+          | SOME (e1, ts) => 
+            (case expect_DDOTS ts 
+              of NONE => NONE 
+              | SOME ts => 
+                (case parse_expr ts 
+                  of NONE => NONE
+                  | SOME (e2, ts) =>
+                    (case expect_RBRACKET ts
+                      of NONE => NONE
+                      | SOME ts => SOME ((call2 "interval" e1 e2) , ts))))))
 
   and matchLogic e1 e2 e3 s1 s2 = 
     I.EIf ((call2 "equal" e1 (I.EVal (I.VList []))),e2,(I.ELet (s1,(call1 "hd" e1),(I.ELet (s2,(call1 "tl" e1),e3)))))
