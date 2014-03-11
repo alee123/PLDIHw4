@@ -383,7 +383,8 @@ structure Parser =  struct
         parse_aterm_LET,
         parse_aterm_LET_FUN,
         parse_aterm_LET_FUN_MORE,
-        parse_aterm_BRACKETS
+        parse_aterm_BRACKETS, 
+        parse_aterm_MATCH
        ] ts
 
   and parse_aterm_INT ts = 
@@ -528,6 +529,50 @@ structure Parser =  struct
             (case expect_RBRACKET ts
               of NONE => NONE
               | SOME ts => SOME ((consItUp es), ts))))
+
+  and parse_aterm_MATCH ts = 
+    (case expect_MATCH ts 
+      of NONE => NONE
+      | SOME ts => 
+        (case parse_expr ts 
+          of NONE => NONE
+          | SOME (e1,ts) => 
+        (case expect_WITH ts 
+          of NONE => NONE
+          | SOME ts => 
+            (case expect_LBRACKET ts 
+              of NONE => NONE
+              | SOME ts => 
+            (case expect_RBRACKET ts
+              of NONE => NONE
+              | SOME ts => 
+                (case expect_RARROW ts
+                  of NONE => NONE
+                  | SOME ts => 
+                (case parse_expr ts
+                  of NONE => NONE
+                  | SOME (e2, ts) => 
+                    (case expect_BAR  ts
+                      of NONE => NONE
+                      | SOME ts => 
+                    (case expect_SYM ts 
+                      of NONE => NONE
+                      | SOME (s1,ts) => 
+                        (case expect_DCOLON ts
+                          of NONE => NONE
+                          | SOME ts => 
+                        (case expect_SYM ts
+                          of NONE => NONE
+                          | SOME (s2,ts) => 
+                            (case expect_RARROW ts
+                              of NONE => NONE
+                              | SOME ts => 
+                                (case parse_expr ts
+                                  of NONE => NONE
+                                  | SOME (e3, ts) => SOME((matchLogic e1 e2 e3 s1 s2),ts))))))))))))))
+
+  and matchLogic e1 e2 e3 s1 s2 = 
+    I.EIf ((call2 "equal" e1 (I.EVal (I.VList []))),e2,(I.ELet (s1,(call1 "hd" e1),(I.ELet (s2,(call1 "tl" e1),e3)))))
 
   and consItUp (e::es) = (call2 "cons" e (consItUp es))
     | consItUp [] = I.EVal (I.VList [])
